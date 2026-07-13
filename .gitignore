@@ -1,0 +1,15 @@
+# R session / history
+.Rhistory
+.RData
+.Rapp.history
+.Rproj.user/
+*.Rproj
+
+# shinyapps.io deploy metadata
+rsconnect/
+
+# macOS
+.DS_Store
+
+# scratch
+*.tmp
