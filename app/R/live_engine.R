@@ -11,6 +11,20 @@
 # UI just reveals trades 1..idx of the recomputed trajectory.
 # =============================================================================
 
+# Money is modeled in abstract units (agent wealth ~ Pareto mean 2, wallet ~ 10).
+# For the UI we scale by PM_MONEY_SCALE so the sums feel like a real market (a
+# few-percent stake is tens of thousands) -- display only; the dynamics are
+# scale-free (prices depend on ratios, not levels).
+PM_MONEY_SCALE <- 1000
+
+# pm_money(): format a model-unit amount as scaled currency, e.g. "$10,000".
+# signed = TRUE prefixes +/- (for P&L).
+pm_money <- function(x, signed = FALSE) {
+  v <- x * PM_MONEY_SCALE
+  s <- paste0("$", formatC(abs(v), format = "f", digits = 0, big.mark = ","))
+  if (signed) paste0(if (v < 0) "−" else "+", s) else if (v < 0) paste0("−", s) else s
+}
+
 # pm_live_params(): fold the in-tab bot config + user wallet into a params list.
 # bot$from is the first round the bot is active (set when the user toggles it on);
 # rounds before that run bot-free, preserving the revealed prefix.
@@ -111,14 +125,15 @@ pm_price_plot <- function(traj, idx, color_mode = "highlight") {
       ggplot2::annotate("point", x = 0, y = p0_init, color = PM_COL$price, size = 1.5)
   }
 
-  # Resolution marker once the whole run is revealed.
+  # Resolution marker once the whole run is revealed. Label is right-aligned at
+  # the terminal step so it extends left (never cropped off the right edge).
   if (idx >= ntr && ntr >= 1) {
     base <- base +
       ggplot2::geom_vline(xintercept = ntr, linetype = "dotted", color = "grey60") +
       ggplot2::annotate("point", x = ntr, y = traj$A, size = 3, color = PM_COL$price) +
       ggplot2::annotate("text", x = ntr, y = traj$A,
-                        label = if (traj$A == 1L) "  Resolves YES" else "  Resolves NO",
-                        hjust = 0, vjust = if (traj$A == 1L) 1.6 else -0.8,
+                        label = if (traj$A == 1L) "Resolves YES  " else "Resolves NO  ",
+                        hjust = 1, vjust = if (traj$A == 1L) 1.6 else -0.8,
                         size = 3.2, fontface = "bold", color = PM_COL$price)
   }
 

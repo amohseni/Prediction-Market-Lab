@@ -8,7 +8,8 @@
 # reveal continues. Animation advances one round per tick (smooth + cheap).
 # =============================================================================
 
-PM_LIVE_USER_WALLET <- 10   # starting cash for the user's own trades (Tab 1)
+PM_LIVE_USER_WALLET <- 10   # starting cash for the user's own trades (model units)
+PM_ANIM_INTERVAL    <- 90   # ms between animation ticks (speed sets trades/tick)
 
 mod_live_ui <- function(id) {
   ns <- NS(id)
@@ -22,8 +23,8 @@ mod_live_ui <- function(id) {
       actionButton(ns("step"), "Step",       class = "btn-sm btn-outline-secondary"),
       actionButton(ns("new"),  "New market", class = "btn-sm btn-outline-secondary"),
       tags$div(class = "pm-live-speed",
-               sliderInput(ns("speed"), "Speed (rounds/s)", min = 1, max = 12,
-                           value = 4, step = 1, width = "150px", ticks = FALSE)),
+               sliderInput(ns("speed"), "Speed (trades/tick)", min = 1, max = 100,
+                           value = 25, step = 1, width = "160px", ticks = FALSE)),
       tags$div(class = "pm-live-scrub",
                sliderInput(ns("scrub"), "Trade", min = 0, max = 1, value = 0,
                            step = 1, width = "100%", ticks = FALSE))
@@ -59,8 +60,10 @@ mod_live_ui <- function(id) {
         bslib::card_header("Your wallet"),
         bslib::card_body(
           uiOutput(ns("wallet_status")),
-          numericInput(ns("amount"), "Amount to spend", value = 2, min = 0.1,
-                       max = PM_LIVE_USER_WALLET, step = 0.5, width = "100%"),
+          numericInput(ns("amount"), "Amount to spend ($)",
+                       value = 2 * PM_MONEY_SCALE, min = 100,
+                       max = PM_LIVE_USER_WALLET * PM_MONEY_SCALE, step = 100,
+                       width = "100%"),
           tags$div(
             class = "pm-wallet-buttons",
             actionButton(ns("buy_yes"), "Buy YES", class = "btn-sm btn-outline-secondary"),
@@ -163,16 +166,24 @@ mod_live_server <- function(id, params, stale) {
       rv$playing <- TRUE
     }, ignoreInit = TRUE)
 
-    # Animation: one round per tick while playing. rv$pos advances synchronously
-    # (no slider round-trip); invalidateLater re-arms the tick.
+    # Speed is trades revealed per tick (1 .. number of traders n); keep the
+    # slider's max in sync with n and clamp the value.
+    observeEvent(params()$n, {
+      n <- params()$n
+      updateSliderInput(session, "speed", max = n,
+                        value = min(isolate(input$speed) %||% n, n))
+    })
+
+    # Animation: reveal `speed` trades per fixed tick while playing. rv$pos
+    # advances synchronously (no slider round-trip); invalidateLater re-arms.
     observe({
       if (!rv$playing) return()
       traj <- isolate(rv$traj); ntr <- pm_n_trades(traj)
       cur <- isolate(rv$pos)
       if (cur >= ntr) { rv$playing <- FALSE; return() }
-      invalidateLater(round(1000 / max(1, isolate(input$speed))))
-      r <- pm_current_round(traj, cur)
-      set_pos(pm_round_end(traj, r + 1L))
+      invalidateLater(PM_ANIM_INTERVAL)
+      step <- max(1L, as.integer(isolate(input$speed)))
+      set_pos(min(cur + step, ntr))
     })
 
     # --- Bot intervention ----------------------------------------------------
@@ -194,10 +205,12 @@ mod_live_server <- function(id, params, stale) {
 
     # --- User trades ---------------------------------------------------------
     add_user_trade <- function(side) {
-      r <- max(1L, pm_current_round(rv$traj, isolate(idx())))
+      r <- max(1L, pm_current_round(rv$traj, isolate(rv$pos)))
       amt <- input$amount; if (is.null(amt) || is.na(amt) || amt <= 0) return()
       ut <- rv$user_trades
-      ut[[length(ut) + 1L]] <- list(round = r, side = side, amount = amt)
+      # UI amount is scaled dollars; the model works in units.
+      ut[[length(ut) + 1L]] <- list(round = r, side = side,
+                                    amount = amt / PM_MONEY_SCALE)
       rv$user_trades <- ut
       rv$playing <- FALSE
       recompute(to = "round", round = r)
@@ -208,8 +221,8 @@ mod_live_server <- function(id, params, stale) {
     output$wallet_status <- renderUI({
       st <- pm_user_status(rv$traj, idx(), PM_LIVE_USER_WALLET)
       tags$p(class = "pm-wallet-line", HTML(sprintf(
-        "Cash <b>$%.2f</b> &nbsp;·&nbsp; YES <b>%.0f</b> &nbsp;·&nbsp; NO <b>%.0f</b>",
-        st$cash, st$yes, st$no)))
+        "Cash <b>%s</b> &nbsp;·&nbsp; YES <b>%.0f</b> &nbsp;·&nbsp; NO <b>%.0f</b>",
+        pm_money(st$cash), st$yes, st$no)))
     })
 
     # --- Plots + log ---------------------------------------------------------
@@ -232,7 +245,7 @@ mod_live_server <- function(id, params, stale) {
       pnl <- pm_pnl_by_type(traj)
       rows <- lapply(seq_len(nrow(pnl)), function(i) {
         tags$tr(tags$td(pnl$who[i]),
-                tags$td(style = "text-align:right;", sprintf("%+.2f", pnl$pnl[i])))
+                tags$td(style = "text-align:right;", pm_money(pnl$pnl[i], signed = TRUE)))
       })
       bslib::card(
         class = "pm-post-card",
