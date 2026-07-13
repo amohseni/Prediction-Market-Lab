@@ -7,17 +7,25 @@
 
 # ---- helpers: build one sidebar control and one accordion group -------------
 
+# pm_control_label(): build a control's label as \(sym\) — desc, so MathJax
+# typesets the symbol. Controls without a symbol (sym = NA) show desc alone.
+pm_control_label <- function(ctrl) {
+  if (is.null(ctrl$sym) || is.na(ctrl$sym)) return(ctrl$desc)
+  HTML(paste0("\\(", ctrl$sym, "\\) — ", ctrl$desc))
+}
+
 # pm_input_tag(): render a single control (slider / integer slider / numeric)
 # with its default value (from pm_default_params()) and a one-line caption.
 pm_input_tag <- function(ctrl, defaults) {
   val <- defaults[[ctrl$id]]
+  lbl <- pm_control_label(ctrl)
   input <- switch(
     ctrl$kind,
-    "slider" = sliderInput(ctrl$id, ctrl$label, min = ctrl$min, max = ctrl$max,
+    "slider" = sliderInput(ctrl$id, lbl, min = ctrl$min, max = ctrl$max,
                            value = val, step = ctrl$step, width = "100%"),
-    "int"    = sliderInput(ctrl$id, ctrl$label, min = ctrl$min, max = ctrl$max,
+    "int"    = sliderInput(ctrl$id, lbl, min = ctrl$min, max = ctrl$max,
                            value = val, step = ctrl$step, width = "100%"),
-    "numeric" = numericInput(ctrl$id, ctrl$label, value = val, min = ctrl$min,
+    "numeric" = numericInput(ctrl$id, lbl, value = val, min = ctrl$min,
                              max = ctrl$max, step = ctrl$step, width = "100%")
   )
   tags$div(
@@ -54,7 +62,6 @@ pm_sidebar <- bslib::sidebar(
     actionButton("reset", "Reset to defaults", class = "btn-sm btn-outline-secondary"),
     uiOutput("stale_badge", inline = TRUE)
   ),
-  tags$hr(),
   # Five parameter groups; one open at a time.
   do.call(bslib::accordion, c(
     list(id = "param_accordion", open = "Information", multiple = FALSE),
@@ -79,8 +86,8 @@ pm_header <- tags$div(
   ))
 )
 
-# ---- main panel: five tabs --------------------------------------------------
-pm_tabs <- bslib::navset_tab(
+# ---- main panel: five tabs (underline style -> reads like text, not boxes) --
+pm_tabs <- bslib::navset_underline(
   id = "main_tabs",
   bslib::nav_panel("Live Market",  mod_live_ui("live")),
   bslib::nav_panel("Run Anatomy",  mod_anatomy_ui("anatomy")),
@@ -93,10 +100,11 @@ pm_tabs <- bslib::navset_tab(
 ui <- bslib::page_fluid(
   theme = bslib::bs_theme(
     version = 5,
-    base_font = bslib::font_google("Inter", local = FALSE),
-    primary = PM_COL$omniscient
+    base_font = bslib::font_collection("Helvetica Neue", "Helvetica", "Arial", "sans-serif"),
+    primary = PM_UI$accent      # dark gray: no blue chrome
   ),
   tags$head(tags$style(HTML(pm_app_css()))),
+  withMathJax(),                # typeset the LaTeX symbols in labels / details
   pm_header,
   bslib::layout_sidebar(
     sidebar = pm_sidebar,

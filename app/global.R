@@ -35,8 +35,8 @@ local({
 })
 
 # ---- App-level constants ----------------------------------------------------
-PM_APP_TITLE    <- "Prediction Market Lab"
-PM_APP_THESIS   <- "When do markets know things? Watch one work — and find out when it fails."
+PM_APP_TITLE    <- "When are prediction markets reliable?"
+PM_APP_THESIS   <- "A simulation model of prediction market performance under a variety of conditions."
 PM_SIDEBAR_WIDTH <- 340   # px; ~1/4 of a standard window (handoff Sec. 3)
 
 # Three-column precis under the title (GUI Sec. 2, verbatim copy).

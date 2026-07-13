@@ -38,33 +38,103 @@ PM_TYPE_COL <- c(
 
 PM_CI_ALPHA <- 0.25
 
+# ---- UI (chrome) palette: grayscale only ------------------------------------
+# House style: text is only black / dark gray, UI panels are very light gray,
+# accents are dark gray. Hue is reserved for plots (PM_COL above). Everything in
+# pm_app_css() draws from here so no color literals leak into the chrome.
+PM_UI <- list(
+  text        = "#212529",  # body / titles: near-black
+  text_muted  = "#495057",  # secondary text, group subtitles
+  text_faint  = "#6c757d",  # captions / help text
+  accent      = "#343a40",  # interactive dark gray (tabs, sliders, buttons)
+  panel_bg    = "#f8f9fa",  # description / summary panels
+  panel_bg_alt= "#fafafa",  # accordion body
+  header_bg   = "#f5f5f5",  # accordion / card headers
+  hover_bg    = "#e9ecef",  # header hover
+  border      = "#dee2e6",  # light borders
+  border_dark = "#495057"   # accent rule (e.g. panel left border)
+)
+
+# One typeface for all text: Helvetica Neue system stack, matching the other
+# apps (default Bootstrap sans). No web font.
+PM_FONT <- "'Helvetica Neue', Helvetica, Arial, sans-serif"
+
 # ---- The one theme ----------------------------------------------------------
-# pm_app_css(): the app's custom CSS (header, precis columns, sidebar controls,
-# stale badge). Returned as a string for a single <style> block in ui.R. Colors
-# reference the same PM_COL semantics used by the plots.
+# pm_app_css(): the app's custom CSS. Returned as a string for a single <style>
+# block in ui.R. Grayscale chrome only (PM_UI); no hue. Overrides bslib/Shiny
+# component colors (tabs, accordion, sliders) that otherwise default to blue.
 pm_app_css <- function() {
-  sprintf("
-    .pm-header { padding: 0.5rem 0 0.25rem 0; }
-    .pm-title { font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.15rem; }
-    .pm-thesis { font-size: 1.1rem; color: #444; margin-bottom: 1rem; }
-    .pm-precis { margin-bottom: 0.5rem; }
-    .pm-precis-col { border-top: 3px solid %s; padding-top: 0.5rem; }
-    .pm-precis-head { font-size: 0.8rem; text-transform: uppercase;
-      letter-spacing: 0.06em; color: %s; margin-bottom: 0.3rem; font-weight: 700; }
-    .pm-precis-col p { color: #555; font-size: 0.92rem; margin-bottom: 0; }
-    .pm-control { margin-bottom: 0.6rem; }
-    .pm-caption { font-size: 0.8rem; color: #777; margin: -0.4rem 0 0 0; line-height: 1.25; }
-    .pm-group-subtitle { color: %s; margin-bottom: 0.2rem; font-size: 0.9rem; }
-    .pm-group-details { color: #666; font-size: 0.82rem; margin-bottom: 0.75rem; }
-    .pm-sidebar-actions { display: flex; align-items: center; gap: 0.5rem;
-      margin-top: 0.5rem; }
-    .pm-badge { font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 0.5rem; }
-    .pm-badge-fresh { background: #e8f0e8; color: #2e7d32; }
-    .pm-badge-stale { background: #fdeaea; color: %s; }
-  ", PM_COL$omniscient, PM_COL$omniscient, PM_COL$omniscient, PM_COL$manip)
+  # Build from named tokens (no positional sprintf) so the CSS stays readable
+  # and adding a rule never means recounting arguments.
+  tmpl <- "
+    /* One typeface everywhere; near-black body text */
+    body, .bslib-page-fluid { font-family: {font}; color: {text}; }
+
+    /* Header */
+    .pm-header { padding: 0.4rem 0 0.25rem 0; }
+    .pm-title { font-weight: 700; color: {text}; letter-spacing: -0.01em; margin-bottom: 0.15rem; }
+    .pm-thesis { font-size: 1.1rem; color: {muted}; margin-bottom: 1.1rem; }
+
+    /* Three-column precis, set in a light-gray panel (no decorative rules) */
+    .pm-precis { background: {panel}; border: 1px solid {border}; border-radius: 4px;
+      padding: 1rem 1.1rem; margin-bottom: 1.25rem; }
+    .pm-precis-head { font-size: 0.78rem; text-transform: uppercase;
+      letter-spacing: 0.07em; color: {muted}; margin-bottom: 0.35rem; font-weight: 700; }
+    .pm-precis-col p { color: {muted}; font-size: 0.92rem; margin-bottom: 0; line-height: 1.5; }
+
+    /* Sidebar controls */
+    .pm-control { margin-bottom: 0.65rem; }
+    .pm-caption { font-size: 0.8rem; color: {faint}; margin: -0.35rem 0 0 0; line-height: 1.3; }
+    .pm-group-subtitle { color: {muted}; margin-bottom: 0.25rem; font-size: 0.88rem; }
+    .pm-group-details { color: {faint}; font-size: 0.82rem; margin-bottom: 0.85rem; line-height: 1.45; }
+    .control-label, .form-label { font-weight: 600; color: {text}; }
+
+    /* Sidebar actions + stale badge (grayscale, differentiated by fill/weight) */
+    .pm-sidebar-actions { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
+    .pm-badge { font-size: 0.74rem; padding: 0.2rem 0.55rem; border-radius: 0.35rem;
+      border: 1px solid {border}; white-space: nowrap; }
+    .pm-badge-fresh { background: {hover}; color: {muted}; }
+    .pm-badge-stale { background: {accent}; color: #ffffff; border-color: {accent}; font-weight: 600; }
+
+    /* Tabs (underline style): same color/weight as the sidebar section titles */
+    .nav-underline .nav-link { color: {muted}; font-weight: 600; }
+    .nav-underline .nav-link:hover { color: {text}; }
+    .nav-underline .nav-link.active { color: {text}; font-weight: 600; border-bottom-color: {accent}; }
+    a { color: {text}; }
+
+    /* Tab content padding */
+    .pm-tab-body { padding-top: 0.85rem; color: {text}; }
+
+    /* Accordion: light-gray headers, dark title, no blue active tint */
+    .accordion-button { background: {header}; color: {text}; font-weight: 600; }
+    .accordion-button:not(.collapsed) { background: {header}; color: {text}; box-shadow: none; }
+    .accordion-button:hover { background: {hover}; }
+    .accordion-button:focus { box-shadow: none; border-color: {accent}; }
+    .accordion-body { background: {panel_alt}; }
+    .accordion-button::after { filter: grayscale(1) brightness(0.5); }
+
+    /* Sliders (ionRangeSlider): neutral dark gray, no blue/green */
+    .irs--shiny .irs-bar { background: {accent}; border-top-color: {accent}; border-bottom-color: {accent}; }
+    .irs--shiny .irs-from, .irs--shiny .irs-to, .irs--shiny .irs-single { background: {accent}; }
+    .irs--shiny .irs-from:before, .irs--shiny .irs-to:before, .irs--shiny .irs-single:before { border-top-color: {accent}; }
+    .irs--shiny .irs-handle { border: 1px solid {accent}; }
+    .irs--shiny .irs-handle:hover { border-color: {accent}; }
+
+    /* Buttons */
+    .btn-outline-secondary { color: {accent}; border-color: {accent}; }
+    .btn-outline-secondary:hover { background: {accent}; color: #ffffff; border-color: {accent}; }
+  "
+  repl <- c(
+    "{font}" = PM_FONT,       "{text}" = PM_UI$text,     "{muted}" = PM_UI$text_muted,
+    "{faint}" = PM_UI$text_faint, "{accent}" = PM_UI$accent,
+    "{panel}" = PM_UI$panel_bg, "{panel_alt}" = PM_UI$panel_bg_alt,
+    "{header}" = PM_UI$header_bg, "{hover}" = PM_UI$hover_bg, "{border}" = PM_UI$border
+  )
+  for (tok in names(repl)) tmpl <- gsub(tok, repl[[tok]], tmpl, fixed = TRUE)
+  tmpl
 }
 
-# pm_tab_placeholder(): a tidy \"what this tab will show\" block used by the
+# pm_tab_placeholder(): a tidy "what this tab will show" block used by the
 # milestone-3 shell modules. `lead` is a one-line purpose; `items` is a bullet
 # list of the tab's planned contents; `milestone` names the build step that
 # fills it in. Requires shiny/htmltools (present whenever the UI is built).
@@ -73,27 +143,33 @@ pm_tab_placeholder <- function(lead, items, milestone) {
     htmltools::tags$p(htmltools::tags$strong(lead)),
     htmltools::tags$ul(lapply(items, htmltools::tags$li)),
     htmltools::tags$p(
-      style = "color:#9e9e9e; font-style:italic; margin-top:0.75rem;",
+      style = sprintf("color:%s; font-style:italic; margin-top:0.75rem;", PM_UI$text_faint),
       sprintf("Wired up in build milestone %d.", milestone)
     )
   )
 }
 
-# theme_pm(): applied to every plot. White background, labeled axes always,
-# legends where needed. Guarded so this file can be sourced by headless model
-# code that has not loaded ggplot2.
+# theme_pm(): applied to every plot (handoff Sec. 6). White panel, subtle gray
+# grid, near-black text, system font -- matching the house theme_sim(). Color is
+# carried only by the geoms (PM_COL). Guarded to no-op without ggplot2.
 theme_pm <- function(base_size = 13) {
   if (!requireNamespace("ggplot2", quietly = TRUE)) return(NULL)
-  ggplot2::theme_minimal(base_size = base_size) +
+  ggplot2::theme_minimal(base_size = base_size, base_family = "") +
     ggplot2::theme(
+      plot.title.position = "plot",
+      plot.title       = ggplot2::element_text(face = "bold", size = base_size + 1,
+                                               color = PM_UI$text,
+                                               margin = ggplot2::margin(b = 6)),
+      plot.subtitle    = ggplot2::element_text(color = "grey40", size = base_size - 2),
       panel.background = ggplot2::element_rect(fill = "white", color = NA),
       plot.background  = ggplot2::element_rect(fill = "white", color = NA),
       panel.grid.minor = ggplot2::element_blank(),
-      panel.grid.major = ggplot2::element_line(color = "#ececec"),
-      axis.title       = ggplot2::element_text(color = "#333333"),
-      axis.text        = ggplot2::element_text(color = "#555555"),
+      panel.grid.major = ggplot2::element_line(color = "#ececec", linewidth = 0.25),
+      axis.title       = ggplot2::element_text(color = "grey20"),
+      axis.text        = ggplot2::element_text(color = "grey20"),
+      strip.text       = ggplot2::element_text(face = "bold"),
+      legend.title     = ggplot2::element_text(face = "plain"),
       legend.position  = "right",
-      plot.title       = ggplot2::element_text(face = "bold", size = base_size + 2),
-      plot.subtitle    = ggplot2::element_text(color = "#666666")
+      plot.margin      = ggplot2::margin(12, 12, 12, 12)
     )
 }

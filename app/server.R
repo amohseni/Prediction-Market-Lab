@@ -71,9 +71,9 @@ server <- function(input, output, session) {
 
   output$stale_badge <- renderUI({
     if (isTRUE(stale())) {
-      tags$span(class = "pm-badge pm-badge-stale", "settings changed — rerun")
+      tags$span(class = "pm-badge pm-badge-stale", "Settings changed — rerun")
     } else {
-      tags$span(class = "pm-badge pm-badge-fresh", "up to date")
+      tags$span(class = "pm-badge pm-badge-fresh", "Up to date")
     }
   })
 

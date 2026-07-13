@@ -76,96 +76,100 @@ pm_default_preset <- function() "Textbook market"
 # Default values come from pm_default_params() (looked up by id) so defaults are
 # defined in exactly one place.
 # =============================================================================
+# Each control carries `sym` (a LaTeX symbol, typeset by MathJax; NA when the
+# control has no math symbol) and `desc` (plain description). ui.R renders the
+# label as \(sym\) — desc. Group `details` use inline LaTeX for their symbols.
 pm_controls <- function() {
   list(
     list(
       id = "grp_information", title = "Information",
-      subtitle = "what there is to know, and who knows it",
+      subtitle = "What there is to know, and who knows it",
       details = paste(
-        "A hidden number theta decides the event: YES happens if theta clears the",
-        "threshold c. Each trader sees theta plus noise. Correlated noise (rho)",
-        "means traders share mistakes rather than making independent checks, which",
-        "caps how much the crowd can ever learn."),
+        "A hidden number \\(\\theta\\) decides the event: YES happens if \\(\\theta\\)",
+        "clears the threshold \\(c\\). Each trader sees \\(\\theta\\) plus noise.",
+        "Correlated noise (\\(\\rho\\)) means traders share mistakes rather than making",
+        "independent checks, which caps how much the crowd can ever learn."),
       controls = list(
-        list(id = "n",         label = "n — traders",        min = 10,  max = 800, step = 5,    kind = "int",
+        list(id = "n",         sym = "n",                   desc = "traders",         min = 10,  max = 800, step = 5,    kind = "int",
              caption = "How many traders receive a clue."),
-        list(id = "sigma_eps", label = "σ_ε — signal noise", min = 0.1, max = 3,  step = 0.05, kind = "slider",
+        list(id = "sigma_eps", sym = "\\sigma_\\varepsilon", desc = "signal noise",    min = 0.1, max = 3,  step = 0.05, kind = "slider",
              caption = "How noisy each clue is."),
-        list(id = "rho",       label = "ρ — error correlation", min = 0, max = 0.95, step = 0.05, kind = "slider",
+        list(id = "rho",       sym = "\\rho",               desc = "error correlation", min = 0, max = 0.95, step = 0.05, kind = "slider",
              caption = "How much traders' errors overlap — shared mistakes, not independent checks."),
-        list(id = "mu0",       label = "μ₀ — prior mean",  min = -3, max = 3, step = 0.1, kind = "slider",
+        list(id = "mu0",       sym = "\\mu_0",              desc = "prior mean",      min = -3, max = 3, step = 0.1, kind = "slider",
              caption = "What everyone believes before any clues (mean)."),
-        list(id = "sigma0",    label = "σ₀ — prior SD",    min = 0.2, max = 3, step = 0.1, kind = "slider",
+        list(id = "sigma0",    sym = "\\sigma_0",           desc = "prior SD",        min = 0.2, max = 3, step = 0.1, kind = "slider",
              caption = "What everyone believes before any clues (spread)."),
-        list(id = "c",         label = "c — event threshold", min = -3, max = 3, step = 0.1, kind = "slider",
+        list(id = "c",         sym = "c",                   desc = "event threshold", min = -3, max = 3, step = 0.1, kind = "slider",
              caption = "The bar the truth must clear for YES — sets how rare the event is.")
       )
     ),
     list(
       id = "grp_market", title = "Market",
-      subtitle = "the trading machinery",
+      subtitle = "The trading machinery",
       details = paste(
-        "Trades run against an LMSR automated market maker. Liquidity b sets how",
-        "much money it takes to move the price; the market opens at p0 and runs",
-        "for T rounds before the truth is revealed and shares pay out."),
+        "Trades run against an LMSR automated market maker. Liquidity \\(b\\) sets how",
+        "much money it takes to move the price; the market opens at \\(p_0\\) and runs",
+        "for \\(T\\) rounds before the truth is revealed and shares pay out."),
       controls = list(
-        list(id = "b",       label = "b — liquidity",   min = 1, max = 100, step = 1, kind = "slider",
+        list(id = "b",       sym = "b",     desc = "liquidity",     min = 1, max = 100, step = 1, kind = "slider",
              caption = "Market depth: how much money it takes to move the price."),
-        list(id = "p0_init", label = "p₀ — opening price", min = 0.01, max = 0.99, step = 0.01, kind = "slider",
+        list(id = "p0_init", sym = "p_0",   desc = "opening price", min = 0.01, max = 0.99, step = 0.01, kind = "slider",
              caption = "Where the price starts (0.5 = ignorance)."),
-        list(id = "T",       label = "T — trading rounds", min = 1, max = 100, step = 1, kind = "int",
+        list(id = "T",       sym = "T",     desc = "trading rounds", min = 1, max = 100, step = 1, kind = "int",
              caption = "How many rounds of trading before the answer is revealed.")
       )
     ),
     list(
       id = "grp_traders", title = "Traders",
-      subtitle = "who shows up",
+      subtitle = "Who shows up",
       details = paste(
-        "Wealth is Pareto-distributed (alpha_w controls how top-heavy). Each trader",
-        "bets a Kelly fraction (lambda) of wealth toward their belief. Some trade on",
-        "noise; some are manipulators with a fixed target price; herding (h) makes",
-        "traders adopt the current price as their own belief."),
+        "Wealth is Pareto-distributed (\\(\\alpha_w\\) controls how top-heavy). Each",
+        "trader bets a Kelly fraction (\\(\\lambda\\)) of wealth toward their belief.",
+        "Some trade on noise; some are manipulators with a fixed target price; herding",
+        "(\\(h\\)) makes traders adopt the current price as their own belief."),
       controls = list(
-        list(id = "alpha_w",   label = "α_w — wealth inequality", min = 1.05, max = 4, step = 0.05, kind = "slider",
+        list(id = "alpha_w",   sym = "\\alpha_w",             desc = "wealth inequality", min = 1.05, max = 4, step = 0.05, kind = "slider",
              caption = "Wealth inequality (lower = a few whales own everything)."),
-        list(id = "lambda",    label = "λ — Kelly fraction", min = 0.05, max = 1, step = 0.05, kind = "slider",
+        list(id = "lambda",    sym = "\\lambda",              desc = "Kelly fraction",  min = 0.05, max = 1, step = 0.05, kind = "slider",
              caption = "Betting aggression: 1 = full Kelly, lower = timid."),
-        list(id = "phi_noise", label = "φ_noise — noise traders", min = 0, max = 1, step = 0.05, kind = "slider",
+        list(id = "phi_noise", sym = "\\phi_{\\text{noise}}", desc = "noise traders",   min = 0, max = 1, step = 0.05, kind = "slider",
              caption = "Share of traders betting on noise instead of information."),
-        list(id = "phi_manip", label = "φ_manip — manipulators", min = 0, max = 1, step = 0.05, kind = "slider",
+        list(id = "phi_manip", sym = "\\phi_{\\text{manip}}", desc = "manipulators",    min = 0, max = 1, step = 0.05, kind = "slider",
              caption = "Share of built-in manipulators (fixed target price)."),
-        list(id = "pistar",    label = "π* — manipulator target", min = 0.01, max = 0.99, step = 0.01, kind = "slider",
+        list(id = "pistar",    sym = "\\pi^{\\star}",         desc = "manipulator target", min = 0.01, max = 0.99, step = 0.01, kind = "slider",
              caption = "The price the built-in manipulators push toward."),
-        list(id = "h",         label = "h — herding", min = 0, max = 1, step = 0.05, kind = "slider",
+        list(id = "h",         sym = "h",                     desc = "herding",         min = 0, max = 1, step = 0.05, kind = "slider",
              caption = "Herding: how much traders adopt the price as their own belief.")
       )
     ),
     list(
       id = "grp_frictions", title = "Frictions",
-      subtitle = "what trading costs",
+      subtitle = "What trading costs",
       details = paste(
-        "Three costs, three mechanisms. A proportional fee (tau) shrinks every trade",
-        "and widens a no-trade band; a flat cost (kappa) kills small trades; a",
-        "participation cost (c_part) decides who bothers to show up at all."),
+        "Three costs, three mechanisms. A proportional fee (\\(\\tau\\)) shrinks every",
+        "trade and widens a no-trade band; a flat cost (\\(\\kappa\\)) kills small",
+        "trades; a participation cost (\\(c_{\\text{part}}\\)) decides who bothers to",
+        "show up at all."),
       controls = list(
-        list(id = "tau",    label = "τ — proportional fee", min = 0, max = 0.5, step = 0.01, kind = "slider",
+        list(id = "tau",    sym = "\\tau",              desc = "proportional fee", min = 0, max = 0.5, step = 0.01, kind = "slider",
              caption = "Fee as a share of each trade (shrinks every trade)."),
-        list(id = "kappa",  label = "κ — fixed cost", min = 0, max = 2, step = 0.05, kind = "slider",
+        list(id = "kappa",  sym = "\\kappa",            desc = "fixed cost",       min = 0, max = 2, step = 0.05, kind = "slider",
              caption = "Flat cost per trade (kills small trades entirely)."),
-        list(id = "c_part", label = "c_part — participation cost", min = 0, max = 2, step = 0.05, kind = "slider",
+        list(id = "c_part", sym = "c_{\\text{part}}",   desc = "participation cost", min = 0, max = 2, step = 0.05, kind = "slider",
              caption = "Cost of paying attention at all (decides who even shows up).")
       )
     ),
     list(
       id = "grp_simulation", title = "Simulation",
-      subtitle = "randomness and averaging",
+      subtitle = "Randomness and averaging",
       details = paste(
-        "The seed fixes the random draws so a run is reproducible. R is how many",
+        "The seed fixes the random draws so a run is reproducible. \\(R\\) is how many",
         "independent markets each research sweep averages over (research tabs only)."),
       controls = list(
-        list(id = "seed", label = "seed — random seed", min = 1, max = 99999, step = 1, kind = "numeric",
+        list(id = "seed", sym = NA, desc = "Random seed", min = 1, max = 99999, step = 1, kind = "numeric",
              caption = "Random seed (reproducibility)."),
-        list(id = "R",    label = "R — replications", min = 10, max = 1000, step = 10, kind = "int",
+        list(id = "R",    sym = "R", desc = "replications", min = 10, max = 1000, step = 10, kind = "int",
              caption = "Replications per ensemble point (research tabs only).")
       )
     )

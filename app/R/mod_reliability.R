@@ -6,20 +6,18 @@
 
 mod_reliability_ui <- function(id) {
   ns <- NS(id)
-  bslib::card(
-    bslib::card_header("Reliability"),
-    bslib::card_body(
-      pm_tab_placeholder(
-        "Sweep any one parameter and see how accuracy responds.",
-        c(
-          "Pick a sweep parameter, range, number of points and metrics (Brier / AE / log / bias / REL / RES).",
-          "Metric vs parameter with a 95% CI ribbon; prior-Brier and omniscient-Brier reference lines.",
-          "A dashed static-benchmark overlay where the frictionless closed form exists.",
-          "Sub-panels: Murphy stack, calibration curve, favorite–longshot (when sweeping c).",
-          "Opens on the precomputed n_eff-ceiling exhibit; CSV / PNG export."
-        ),
-        milestone = 6
-      )
+  tags$div(
+    class = "pm-tab-body",
+    pm_tab_placeholder(
+      "Sweep any one parameter and see how accuracy responds.",
+      c(
+        "Pick a sweep parameter, range, number of points and metrics (Brier / AE / log / bias / REL / RES).",
+        "Metric vs parameter with a 95% CI ribbon; prior-Brier and omniscient-Brier reference lines.",
+        "A dashed static-benchmark overlay where the frictionless closed form exists.",
+        "Sub-panels: Murphy stack, calibration curve, favorite–longshot (when sweeping c).",
+        "Opens on the precomputed n_eff-ceiling exhibit; CSV / PNG export."
+      ),
+      milestone = 6
     )
   )
 }
