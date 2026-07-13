@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "pm-lab",
+      "runtimeExecutable": "Rscript",
+      "runtimeArgs": ["-e", "shiny::runApp(appDir='app', port=8200, host='127.0.0.1', launch.browser=FALSE)"],
+      "port": 8200
+    }
+  ]
+}
