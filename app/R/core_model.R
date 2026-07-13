@@ -73,7 +73,9 @@ pm_default_params <- function() {
     bot_on     = FALSE,
     B_m        = 0.1,           # bot budget as share of total agent wealth
     bot_pistar = 0.8,           # bot target price (own pi*)
-    bot_rounds = NULL           # NULL => active every round; else vector of t's
+    bot_rounds = NULL,          # NULL => active every round; else vector of t's
+    # Interactive user account (Live Market tab only; 0 => no user)
+    user_wallet = 0             # starting cash for the user's own trades
   )
 }
 
@@ -309,6 +311,50 @@ agent_turn <- function(i, market, ag, params, t = NA_integer_) {
   invisible(TRUE)
 }
 
+# -----------------------------------------------------------------------------
+# user_trade(): the interactive user spends `amount` of their wallet on `side`
+# ("YES"/"NO") using the Sec. 1.4 budget formulas -- no Kelly logic (handoff
+# Sec. 1.5 note). The spend is capped at the wallet. Of the outlay, cost goes to
+# the LMSR and fee = tau*cost is the operator's fee; both accrue to the operator
+# (as for agents). Records the trade with trader id 0 and type "user".
+# -----------------------------------------------------------------------------
+user_trade <- function(market, side, amount, params, t = NA_integer_) {
+  tau <- params$tau; b <- params$b
+  m <- min(amount, market$user_wallet)          # subject to wallet
+  if (m <= 0) return(invisible(FALSE))
+  cost <- m / (1 + tau)                          # portion available for LMSR cost
+  fee  <- m - cost
+  p <- market$p
+  if (side == "YES") {
+    p_final <- 1 - (1 - p) * exp(-cost / b)
+    if (p_final > P_MAX) p_final <- P_MAX
+    delta <- b * (log(p_final / (1 - p_final)) - log(p / (1 - p)))
+    market$user_y <- market$user_y + delta
+    market$q_Y    <- market$q_Y + delta
+  } else {
+    p_final <- p * exp(-cost / b)
+    if (p_final < P_MIN) p_final <- P_MIN
+    delta <- b * (log((1 - p_final) / p_final) - log((1 - p) / p))
+    market$user_z <- market$user_z + delta
+    market$q_N    <- market$q_N + delta
+  }
+  if (delta <= 0) return(invisible(FALSE))
+  market$user_wallet <- market$user_wallet - m
+  market$operator    <- market$operator + m       # cost + fee to operator
+  market$p           <- p_final
+  if (isTRUE(market$record_trades)) {
+    k <- market$ntr + 1L
+    market$ntr <- k
+    market$tr_t[k] <- t;         market$tr_trader[k] <- 0L
+    market$tr_type[k] <- "user"; market$tr_is_bot[k] <- FALSE
+    market$tr_side[k] <- side;   market$tr_shares[k] <- delta
+    market$tr_cost[k] <- cost;   market$tr_fee[k] <- fee
+    market$tr_p_before[k] <- p;  market$tr_p_after[k] <- p_final
+  }
+  market$volume <- market$volume + cost
+  invisible(TRUE)
+}
+
 # =============================================================================
 # One whole market (handoff Sec. 1.6): draw the world, run T rounds, resolve.
 #
@@ -317,12 +363,21 @@ agent_turn <- function(i, market, ag, params, t = NA_integer_) {
 # audit:  when TRUE, records the money-conservation total after every turn so
 #         the unit test can check the invariant step by step.
 #
+# user_trades: NULL for ordinary runs (ensembles/tests -> zero overhead). For the
+#   Live Market tab, a list of list(round=t, side="YES"/"NO", amount=m): the user
+#   spends m of their wallet at the END of round t via the Sec. 1.4 budget
+#   formulas (no Kelly). Because the run is deterministic in `seed`, scheduling a
+#   user trade (or the bot via params$bot_rounds) and re-running reproduces the
+#   identical prefix and the correct divergent suffix -- no resumable engine
+#   needed. The user is an extra account (params$user_wallet) tracked in the
+#   money-conservation identity alongside agents/operator/burned.
+#
 # Returns a list with the drawn world (theta, A), the reference forecasts
 # (p0, p*, p_static), the price trajectory, resolution P&L, and -- in full mode
 # -- the trade log and snapshots. Deterministic given `seed`.
 # =============================================================================
 run_market <- function(params, seed = NULL, record = c("full", "light"),
-                       audit = FALSE) {
+                       audit = FALSE, user_trades = NULL) {
   record <- match.arg(record)
   if (is.null(seed)) seed <- params$seed
   if (!is.null(seed) && !is.na(seed)) set.seed(as.integer(seed))
@@ -415,7 +470,12 @@ run_market <- function(params, seed = NULL, record = c("full", "light"),
   ag$entered <- entered
   p_tilde_init <- p_tilde          # keep initial beliefs (herding overwrites)
 
-  initial_total <- sum(w)          # money-conservation baseline (includes bot)
+  # User account (Live Market tab). user_wallet default 0 => inert.
+  user_wallet0 <- params$user_wallet
+  if (is.null(user_wallet0) || is.na(user_wallet0)) user_wallet0 <- 0
+  n_user_tr <- if (is.null(user_trades)) 0L else length(user_trades)
+
+  initial_total <- sum(w) + user_wallet0   # conservation baseline (incl. bot + user)
 
   # ---- Market environment ---------------------------------------------------
   market <- new.env(parent = emptyenv())
@@ -425,9 +485,12 @@ run_market <- function(params, seed = NULL, record = c("full", "light"),
   market$operator <- 0
   market$burned   <- 0
   market$volume   <- 0
+  market$user_wallet <- user_wallet0   # user's cash
+  market$user_y      <- 0              # user's YES shares
+  market$user_z      <- 0              # user's NO shares
   market$record_trades <- (record == "full")
   if (market$record_trades) {
-    maxtr <- n_all * Tt
+    maxtr <- n_all * Tt + n_user_tr
     market$ntr        <- 0L
     market$tr_t        <- integer(maxtr)
     market$tr_trader   <- integer(maxtr)
@@ -458,7 +521,19 @@ run_market <- function(params, seed = NULL, record = c("full", "light"),
     for (i in order) {
       agent_turn(i, market, ag, params, t = t)
       if (audit) audit_vec <- c(audit_vec,
-                                sum(ag$w) + market$operator + market$burned)
+                                sum(ag$w) + market$operator + market$burned +
+                                  market$user_wallet)
+    }
+    # User interventions scheduled for this round execute after the agents.
+    if (n_user_tr > 0) {
+      for (ut in user_trades) {
+        if (isTRUE(ut$round == t)) {
+          user_trade(market, ut$side, ut$amount, params, t = t)
+          if (audit) audit_vec <- c(audit_vec,
+                                    sum(ag$w) + market$operator + market$burned +
+                                      market$user_wallet)
+        }
+      }
     }
     price_round[t] <- market$p
     if (record == "full") {
@@ -477,9 +552,19 @@ run_market <- function(params, seed = NULL, record = c("full", "light"),
   ag$w   <- ag$w + payout
   market$operator <- market$operator - sum(payout)
 
+  # User resolution (if any user account activity).
+  user_payout <- if (A == 1L) market$user_y else market$user_z
+  market$user_wallet <- market$user_wallet + user_payout
+  market$operator    <- market$operator - user_payout
+
   # Per-agent P&L: final wealth minus initial wealth (bot included).
   pnl <- ag$w - w
   operator_pnl <- market$operator
+  user_info <- list(
+    wallet0 = user_wallet0, wallet = market$user_wallet,
+    y = market$user_y, z = market$user_z,
+    pnl = market$user_wallet - user_wallet0
+  )
 
   # ---- Trade log as a data frame (full mode) --------------------------------
   trades <- NULL
@@ -545,6 +630,7 @@ run_market <- function(params, seed = NULL, record = c("full", "light"),
     ),
     operator_pnl  = operator_pnl,
     burned        = market$burned,
+    user          = user_info,
     initial_total = initial_total,
     conv_time     = conv_time,
     volatility    = volatility,

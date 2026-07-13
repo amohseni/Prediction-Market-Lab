@@ -167,3 +167,36 @@ test_that("run_market is deterministic given a seed", {
   expect_identical(a$theta, b$theta)
   expect_equal(a$trades, b$trades)
 })
+
+# -----------------------------------------------------------------------------
+# User account (Live Market tab): money conservation still holds with a user
+# wallet + injected user trades and all frictions; and a scheduled intervention
+# leaves the pre-intervention prefix identical (the basis of the replay engine).
+# -----------------------------------------------------------------------------
+test_that("user trades conserve money and preserve the pre-intervention prefix", {
+  p <- pm_default_params()
+  p$n <- 50L; p$T <- 12L
+  p$tau <- 0.03; p$kappa <- 0.04; p$c_part <- 0.1
+  p$phi_noise <- 0.2; p$bot_on <- TRUE
+  p$user_wallet <- 8
+  uts <- list(list(round = 4L, side = "YES", amount = 3),
+              list(round = 7L, side = "NO",  amount = 2))
+  res <- run_market(p, seed = 55, record = "full", audit = TRUE, user_trades = uts)
+
+  # Invariant (now including the user wallet) holds after every step...
+  expect_true(all(abs(res$audit - res$initial_total) < 1e-8))
+  # ...and post-resolution.
+  final_total <- sum(res$agents_final$w) + res$operator_pnl + res$burned + res$user$wallet
+  expect_equal(final_total, res$initial_total, tolerance = 1e-8)
+  # User actually took a position and it is reflected in the log.
+  expect_true(res$user$y > 0 && res$user$z > 0)
+  expect_true(any(res$trades$type == "user"))
+
+  # Prefix determinism: a user trade at round 4 leaves rounds 1..3 unchanged
+  # versus the no-intervention run with the same seed.
+  base <- run_market(p, seed = 55, record = "full")          # no user_trades
+  one  <- run_market(p, seed = 55, record = "full",
+                     user_trades = list(list(round = 4L, side = "YES", amount = 3)))
+  expect_equal(base$price_round[1:3], one$price_round[1:3], tolerance = 1e-12)
+  expect_false(isTRUE(all.equal(base$price_round[5:12], one$price_round[5:12])))
+})

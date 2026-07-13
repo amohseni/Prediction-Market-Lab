@@ -7,6 +7,9 @@
 
 options(shiny.autoload.r = FALSE)   # we source R/ ourselves, below
 
+# Null-coalescing helper (used across modules); harmless if a package exports it.
+`%||%` <- function(a, b) if (is.null(a)) b else a
+
 suppressPackageStartupMessages({
   library(shiny)
   library(bslib)
@@ -27,6 +30,7 @@ local({
     "theme.R",           # colors, P_MIN/P_MAX, ggplot theme, UI helpers
     "core_model.R",      # beliefs, LMSR, AgentTurn, RunMarket
     "core_ensemble.R",   # ensembles, metrics, sweeps, cache
+    "live_engine.R",     # Tab 1 live-run assembly + plot/log/pnl helpers
     "presets.R",         # presets + sidebar control spec
     "mod_live.R", "mod_anatomy.R", "mod_reliability.R",
     "mod_interactions.R", "mod_guide.R"

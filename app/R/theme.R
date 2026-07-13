@@ -105,6 +105,23 @@ pm_app_css <- function() {
     /* Tab content padding */
     .pm-tab-body { padding-top: 0.85rem; color: {text}; }
 
+    /* Live Market: control strip, cards, log, P&L table */
+    .pm-live-controls { display: flex; align-items: flex-end; gap: 0.9rem;
+      flex-wrap: wrap; margin-bottom: 0.5rem; }
+    .pm-live-controls .form-group { margin-bottom: 0; }
+    .pm-live-scrub { flex: 1 1 260px; min-width: 220px; }
+    .pm-live-colormode { margin: 0.25rem 0 -0.25rem 0; }
+    .pm-wallet-buttons { display: flex; gap: 0.5rem; margin-bottom: 0.4rem; }
+    .pm-wallet-line { font-size: 0.95rem; margin-bottom: 0.6rem; }
+    .pm-event-log { font-family: inherit; white-space: pre-wrap; font-size: 0.82rem;
+      color: {muted}; background: {panel}; border: 1px solid {border};
+      border-radius: 4px; padding: 0.6rem 0.75rem; max-height: 220px; overflow-y: auto; }
+    .pm-post-card { margin-top: 0.9rem; }
+    .pm-pnl-table { width: 100%; font-size: 0.9rem; margin-top: 0.4rem; }
+    .pm-pnl-table th { color: {muted}; font-weight: 600; border-bottom: 1px solid {border};
+      padding: 0.2rem 0; }
+    .pm-pnl-table td { padding: 0.15rem 0; border-bottom: 1px solid {panel}; }
+
     /* Accordion: light-gray headers, dark title, no blue active tint */
     .accordion-button { background: {header}; color: {text}; font-weight: 600; }
     .accordion-button:not(.collapsed) { background: {header}; color: {text}; box-shadow: none; }
