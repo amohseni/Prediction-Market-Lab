@@ -72,7 +72,7 @@ pm_sidebar <- bslib::sidebar(
 # ---- assemble the header (title + thesis + three columns) -------------------
 pm_header <- tags$div(
   class = "pm-header",
-  tags$h1(class = "pm-title", PM_APP_TITLE),
+  tags$h1(class = "pm-title", PM_APP_TITLE), 
   tags$p(class = "pm-thesis", PM_APP_THESIS),
   do.call(bslib::layout_columns, c(
     list(col_widths = c(4, 4, 4), class = "pm-precis"),
@@ -103,7 +103,16 @@ ui <- bslib::page_fluid(
     base_font = bslib::font_collection("Helvetica Neue", "Helvetica", "Arial", "sans-serif"),
     primary = PM_UI$accent      # dark gray: no blue chrome
   ),
-  tags$head(tags$style(HTML(pm_app_css()))),
+  tags$head(
+    tags$style(HTML(pm_app_css())),
+    # bslib renders a tab's plots at 0/tiny width during the hidden->shown
+    # transition (causing "invalid quartz() device size" or oversized text).
+    # Nudge Shiny to re-measure and re-render once the tab is visible.
+    tags$script(HTML(
+      "document.addEventListener('shown.bs.tab', function(){",
+      "  setTimeout(function(){ window.dispatchEvent(new Event('resize')); }, 60);",
+      "});"))
+  ),
   withMathJax(),                # typeset the LaTeX symbols in labels / details
   pm_header,
   bslib::layout_sidebar(

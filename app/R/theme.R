@@ -22,6 +22,7 @@ PM_COL <- list(
   omniscient = "#2b6cb0",  # omniscient p* / omn-Brier: blue, dashed
   manip      = "#c0392b",  # manipulation (bot + structural): red
   user       = "#e67e22",  # user trades: orange
+  benchmark  = "#2e7d32",  # wealth-weighted / static benchmark: green (Tabs 2,3)
   informed   = "#2b6cb0",  # informed agents (swarm/log) -- reuse omniscient blue
   noise      = "#7f8c8d",  # noise traders: muted gray
   ci_ribbon  = "#9e9e9e"   # CI ribbons: gray, alpha 0.25 at use site
@@ -116,6 +117,9 @@ pm_app_css <- function() {
     .pm-event-log { font-family: inherit; white-space: pre-wrap; font-size: 0.82rem;
       color: {muted}; background: {panel}; border: 1px solid {border};
       border-radius: 4px; padding: 0.6rem 0.75rem; max-height: 220px; overflow-y: auto; }
+    .pm-empty-state { background: {panel}; border: 1px dashed {border};
+      border-radius: 4px; padding: 1.1rem 1.25rem; margin: 0.5rem 0; color: {muted}; }
+    .pm-empty-state p { margin: 0 0 0.35rem 0; }
     .pm-post-card { margin-top: 0.9rem; }
     .pm-pnl-table { width: 100%; font-size: 0.9rem; margin-top: 0.4rem; }
     .pm-pnl-table th { color: {muted}; font-weight: 600; border-bottom: 1px solid {border};

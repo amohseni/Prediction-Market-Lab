@@ -264,5 +264,8 @@ mod_live_server <- function(id, params, stale) {
         )
       )
     })
+
+    # Expose the current run so Run Anatomy (Tab 2) can dissect the same market.
+    reactive(rv$traj)
   })
 }

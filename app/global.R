@@ -31,6 +31,7 @@ local({
     "core_model.R",      # beliefs, LMSR, AgentTurn, RunMarket
     "core_ensemble.R",   # ensembles, metrics, sweeps, cache
     "live_engine.R",     # Tab 1 live-run assembly + plot/log/pnl helpers
+    "anatomy_plots.R",   # Tab 2 per-round diagnostic plots
     "presets.R",         # presets + sidebar control spec
     "mod_live.R", "mod_anatomy.R", "mod_reliability.R",
     "mod_interactions.R", "mod_guide.R"

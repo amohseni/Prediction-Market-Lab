@@ -77,9 +77,11 @@ server <- function(input, output, session) {
     }
   })
 
-  # --- tab modules (shells for now; share params + stale) --------------------
-  mod_live_server("live", params, stale)
-  mod_anatomy_server("anatomy", params, stale)
+  # --- tab modules -----------------------------------------------------------
+  # Live Market owns the current run and returns it so Run Anatomy dissects the
+  # same trajectory.
+  live_traj <- mod_live_server("live", params, stale)
+  mod_anatomy_server("anatomy", live_traj)
   mod_reliability_server("reliability", params, stale)
   mod_interactions_server("interactions", params, stale)
   mod_guide_server("guide")
