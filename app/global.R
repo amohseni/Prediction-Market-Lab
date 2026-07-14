@@ -33,6 +33,7 @@ local({
     "live_engine.R",     # Tab 1 live-run assembly + plot/log/pnl helpers
     "anatomy_plots.R",   # Tab 2 per-round diagnostic plots
     "reliability_plots.R", # Tab 3 sweep plots + sweep-param metadata
+    "interaction_plots.R", # Tab 4 2-D maps + curated questions
     "presets.R",         # presets + sidebar control spec
     "mod_live.R", "mod_anatomy.R", "mod_reliability.R",
     "mod_interactions.R", "mod_guide.R"

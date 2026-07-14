@@ -160,6 +160,8 @@ run_ensemble <- function(params, R = NULL, seed = NULL) {
     REL = mu$REL, RES = mu$RES, UNC = mu$UNC, murphy_gap = mu$gap,
     log_score = log_score(p_T, A),
     bias = mean(p_T) - mean(A),
+    dist_star = mean(abs(p_T - p_star)),   # mean |p_T - p*|: distance to best possible
+    signed_dist = mean(p_T - p_star),      # signed: manipulation pushes this away from 0
     calib_intercept = cal["intercept"], calib_slope = cal["slope"],
     conv_time = mean(conv), volatility = mean(volat), volume = mean(volume),
     participation = mean(particip, na.rm = TRUE),
@@ -204,6 +206,68 @@ sweep_1d <- function(base_params, param, values, R = NULL, seed = NULL,
       stringsAsFactors = FALSE
     )
     if (is.function(progress)) progress(j / length(values))
+  }
+  do.call(rbind, rows)
+}
+
+# =============================================================================
+# Sweeps (2-D) -- interaction maps (Tab 4)
+# =============================================================================
+
+# sweep_2d(): vary two parameters over a grid and run an ensemble at each cell.
+# `extra` is a list of fixed parameter overrides applied on top of base (e.g.
+# list(bot_on = TRUE, bot_rounds = 3:8) for a scripted-bot map). Returns one row
+# per cell with the full metric set. `progress` is called with a 0..1 fraction.
+sweep_2d <- function(base_params, x_param, x_values, y_param, y_values,
+                     R = NULL, seed = NULL, extra = NULL, progress = NULL) {
+  grid <- expand.grid(x = x_values, y = y_values, KEEP.OUT.ATTRS = FALSE)
+  n <- nrow(grid)
+  rows <- vector("list", n)
+  for (k in seq_len(n)) {
+    p <- base_params
+    if (length(extra)) for (nm in names(extra)) p[[nm]] <- extra[[nm]]
+    p[[x_param]] <- grid$x[k]
+    p[[y_param]] <- grid$y[k]
+    s <- run_ensemble(p, R = R, seed = seed)$summary
+    rows[[k]] <- data.frame(
+      x = grid$x[k], y = grid$y[k],
+      B = s$B, AE = s$AE, dist_star = s$dist_star, signed_dist = s$signed_dist,
+      log_score = s$log_score, bias = s$bias, REL = s$REL, RES = s$RES,
+      participation = s$participation, active = s$active,
+      stringsAsFactors = FALSE)
+    if (is.function(progress)) progress(k / n)
+  }
+  out <- do.call(rbind, rows)
+  attr(out, "x_param") <- x_param
+  attr(out, "y_param") <- y_param
+  out
+}
+
+# hanson_oprea_effect(): the friction-ranking exhibit (Tab 4 Q5). For each single
+# friction (c_part / kappa / tau) at `level`, the change in mean Brier when the
+# manipulator bot is switched on (with a per-run random target so its direction
+# averages out): negative => the bot's noise wakes dormant traders and *improves*
+# accuracy (Hanson-Oprea). Returns a tidy frame: friction, B_off, B_on, effect.
+hanson_oprea_effect <- function(base_params, level = 0.2, B_m = 0.1, R = NULL,
+                                seed = NULL, progress = NULL) {
+  regimes <- list(
+    "Participation cost" = list(c_part = level),
+    "Fixed cost"         = list(kappa = level),
+    "Proportional fee"   = list(tau = min(level, 0.15)))
+  rows <- list(); i <- 0; tot <- length(regimes) * 2
+  for (nm in names(regimes)) {
+    p0 <- base_params
+    p0$c_part <- 0; p0$kappa <- 0; p0$tau <- 0
+    for (k in names(regimes[[nm]])) p0[[k]] <- regimes[[nm]][[k]]
+    p_off <- p0; p_off$bot_on <- FALSE
+    p_on  <- p0; p_on$bot_on <- TRUE; p_on$B_m <- B_m; p_on$bot_pistar_random <- TRUE
+    B_off <- run_ensemble(p_off, R = R, seed = seed)$summary$B
+    i <- i + 1; if (is.function(progress)) progress(i / tot)
+    B_on  <- run_ensemble(p_on,  R = R, seed = seed)$summary$B
+    i <- i + 1; if (is.function(progress)) progress(i / tot)
+    rows[[length(rows) + 1]] <- data.frame(
+      friction = nm, B_off = B_off, B_on = B_on, effect = B_on - B_off,
+      stringsAsFactors = FALSE)
   }
   do.call(rbind, rows)
 }

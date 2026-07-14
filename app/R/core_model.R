@@ -73,6 +73,7 @@ pm_default_params <- function() {
     bot_on     = FALSE,
     B_m        = 0.1,           # bot budget as share of total agent wealth
     bot_pistar = 0.8,           # bot target price (own pi*)
+    bot_pistar_random = FALSE,  # if TRUE, draw bot target ~ U(0.1, 0.9) per run
     bot_rounds = NULL,          # NULL => active every round; else vector of t's
     # Interactive user account (Live Market tab only; 0 => no user)
     user_wallet = 0             # starting cash for the user's own trades
@@ -443,8 +444,11 @@ run_market <- function(params, seed = NULL, record = c("full", "light"),
   # ---- Optional manipulator bot (agent n+1, outside the n) ------------------
   if (isTRUE(params$bot_on) && params$B_m > 0) {
     bot_w <- params$B_m * sum(w)
+    # Bot target: fixed pi*, or drawn per run (so its push direction averages out
+    # across an ensemble -- the Hanson-Oprea "waking the market" test, V4/Q5).
+    bot_target <- if (isTRUE(params$bot_pistar_random)) runif(1, 0.1, 0.9) else params$bot_pistar
     w        <- c(w, bot_w)
-    p_tilde  <- c(p_tilde, clamp_p(params$bot_pistar))
+    p_tilde  <- c(p_tilde, clamp_p(bot_target))
     type     <- c(type, "manipulator")
     is_bot   <- c(is_bot, TRUE)
     entered  <- c(entered, 1L)
