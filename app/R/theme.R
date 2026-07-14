@@ -125,6 +125,17 @@ pm_app_css <- function() {
       color: {muted}; font-size: 0.85rem; padding: 0.5rem 0.75rem;
       border-radius: 3px; margin: 0.4rem 0 0.6rem 0; }
 
+    /* Guide (Tab 5) prose */
+    .pm-guide-section { padding-top: 0.75rem; max-width: 820px; }
+    .pm-guide-prose h4 { font-weight: 700; color: {text}; margin: 1.25rem 0 0.4rem 0;
+      font-size: 1.02rem; }
+    .pm-guide-prose h4:first-child { margin-top: 0.25rem; }
+    .pm-guide-prose p, .pm-guide-prose li { color: {muted}; line-height: 1.6; font-size: 0.94rem; }
+    .pm-guide-prose b { color: {text}; }
+    .pm-guide-refs li { color: {muted}; line-height: 1.5; margin-bottom: 0.5rem; font-size: 0.92rem; }
+    .pm-anatomy-link { color: {accent}; font-weight: 600; cursor: pointer; text-decoration: none; }
+    .pm-anatomy-link:hover { text-decoration: underline; color: {text}; }
+
     .pm-empty-state { background: {panel}; border: 1px dashed {border};
       border-radius: 4px; padding: 1.1rem 1.25rem; margin: 0.5rem 0; color: {muted}; }
     .pm-empty-state p { margin: 0 0 0.35rem 0; }

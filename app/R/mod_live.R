@@ -260,7 +260,12 @@ mod_live_server <- function(id, params, stale) {
             if (beat >= 0) "beat" else "trailed", abs(beat)))),
           tags$table(class = "pm-pnl-table",
                      tags$thead(tags$tr(tags$th("P&L by participant"), tags$th(""))),
-                     tags$tbody(rows))
+                     tags$tbody(rows)),
+          # Client-side jump to Run Anatomy (clicks that tab's nav-link).
+          tags$p(style = "margin-top:0.6rem;",
+                 tags$a(class = "pm-anatomy-link",
+                        onclick = "document.querySelector(\".nav-link[data-value='Run Anatomy']\").click()",
+                        "See the anatomy of this run →"))
         )
       )
     })
