@@ -117,6 +117,14 @@ pm_app_css <- function() {
     .pm-event-log { font-family: inherit; white-space: pre-wrap; font-size: 0.82rem;
       color: {muted}; background: {panel}; border: 1px solid {border};
       border-radius: 4px; padding: 0.6rem 0.75rem; max-height: 220px; overflow-y: auto; }
+    /* Reliability (Tab 3) setup + exports + stale note */
+    .pm-sweep-actions { display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; flex-wrap: wrap; margin-top: 0.25rem; }
+    .pm-sweep-downloads { display: flex; gap: 0.5rem; margin: 0.6rem 0; }
+    .pm-stale-note { background: {header}; border-left: 3px solid {accent};
+      color: {muted}; font-size: 0.85rem; padding: 0.5rem 0.75rem;
+      border-radius: 3px; margin: 0.4rem 0 0.6rem 0; }
+
     .pm-empty-state { background: {panel}; border: 1px dashed {border};
       border-radius: 4px; padding: 1.1rem 1.25rem; margin: 0.5rem 0; color: {muted}; }
     .pm-empty-state p { margin: 0 0 0.35rem 0; }

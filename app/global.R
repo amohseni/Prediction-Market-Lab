@@ -32,6 +32,7 @@ local({
     "core_ensemble.R",   # ensembles, metrics, sweeps, cache
     "live_engine.R",     # Tab 1 live-run assembly + plot/log/pnl helpers
     "anatomy_plots.R",   # Tab 2 per-round diagnostic plots
+    "reliability_plots.R", # Tab 3 sweep plots + sweep-param metadata
     "presets.R",         # presets + sidebar control spec
     "mod_live.R", "mod_anatomy.R", "mod_reliability.R",
     "mod_interactions.R", "mod_guide.R"
@@ -43,6 +44,13 @@ local({
 PM_APP_TITLE    <- "When are prediction markets reliable?"
 PM_APP_THESIS   <- "A simulation model of prediction market performance under a variety of conditions."
 PM_SIDEBAR_WIDTH <- 340   # px; ~1/4 of a standard window (handoff Sec. 3)
+
+# Bundled n_eff-ceiling exhibit for Tab 3's initial (never-blank) state. NULL if
+# it has not been generated yet (scripts/make_exhibit.R).
+PM_NEFF_EXHIBIT <- local({
+  f <- file.path("data", "neff_exhibit.rds")
+  if (file.exists(f)) readRDS(f) else NULL
+})
 
 # Three-column precis under the title (GUI Sec. 2, verbatim copy).
 PM_PRECIS <- list(
