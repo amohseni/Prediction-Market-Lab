@@ -7,11 +7,13 @@
 
 # ---- helpers: build one sidebar control and one accordion group -------------
 
-# pm_control_label(): build a control's label as \(sym\) — desc, so MathJax
-# typesets the symbol. Controls without a symbol (sym = NA) show desc alone.
+# pm_control_label(): build a control's label as "Description \(sym\)" -- text
+# first, symbol second (MathJax typesets the symbol). Description is sentence-
+# cased. Controls without a symbol (sym = NA) show the description alone.
 pm_control_label <- function(ctrl) {
-  if (is.null(ctrl$sym) || is.na(ctrl$sym)) return(ctrl$desc)
-  HTML(paste0("\\(", ctrl$sym, "\\) — ", ctrl$desc))
+  desc <- sub("^(.)", "\\U\\1", ctrl$desc, perl = TRUE)   # sentence-case first letter
+  if (is.null(ctrl$sym) || is.na(ctrl$sym)) return(desc)
+  HTML(paste0(desc, " \\(", ctrl$sym, "\\)"))
 }
 
 # pm_input_tag(): render a single control (slider / integer slider / numeric)

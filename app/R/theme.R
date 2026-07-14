@@ -197,10 +197,13 @@ theme_pm <- function(base_size = 13) {
   ggplot2::theme_minimal(base_size = base_size, base_family = "") +
     ggplot2::theme(
       plot.title.position = "plot",
+      # Bottom margins keep the (vertically centered) y-axis title from bumping
+      # into the title/subtitle: whichever text is lowest sits >= 10pt above the panel.
       plot.title       = ggplot2::element_text(face = "bold", size = base_size + 1,
                                                color = PM_UI$text,
-                                               margin = ggplot2::margin(b = 6)),
-      plot.subtitle    = ggplot2::element_text(color = "grey40", size = base_size - 2),
+                                               margin = ggplot2::margin(b = 10)),
+      plot.subtitle    = ggplot2::element_text(color = "grey40", size = base_size - 2,
+                                               margin = ggplot2::margin(t = -4, b = 10)),
       panel.background = ggplot2::element_rect(fill = "white", color = NA),
       plot.background  = ggplot2::element_rect(fill = "white", color = NA),
       panel.grid.minor = ggplot2::element_blank(),
