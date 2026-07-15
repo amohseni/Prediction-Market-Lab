@@ -53,12 +53,12 @@ PM_NEFF_EXHIBIT <- local({
   if (file.exists(f)) readRDS(f) else NULL
 })
 
-# Three-column precis under the title (GUI Sec. 2, verbatim copy).
+# Three-column precis under the title (GUI Sec. 2).
 PM_PRECIS <- list(
   list(head = "The model",
-       body = "A hidden truth; traders with noisy, correlated clues, unequal wealth, betting against an automated market maker."),
+       body = "A prediction market turns bets into a forecast: the price of a bet, between 0 and 1, can be interpreted as the market's estimate of the probability that the proposition under consideration will resolve as true. Traders with different wealth each hold partial, potentially biased information about the proposition's truth, and their errors can overlap rather than being independent. They trade with an automated dealer that will always buy or sell at the current price."),
   list(head = "The mechanism",
-       body = "Traders move the price toward their beliefs, wallet-limited. Watch the price converge — then try to manipulate it."),
+       body = "A trader who believes the price is too low buys, and buying pushes the price up toward their belief. The more wealth they stake, the further the price moves. On average, trading rewards those who move the price closer to the truth, so money tends to flow toward better-informed traders, and under the right conditions the price becomes an increasingly accurate forecast. But averaging across traders can cancel only their independent mistakes: whatever error the traders share remains in the price, and no market, however large, can be more accurate than the shared error allows."),
   list(head = "The science",
-       body = "Accuracy measured against hard limits: correlated errors cap what any market can know; fees, inequality, herding, and manipulators do the rest. Map the failure modes in parameter space.")
+       body = "The traders' shared error sets the best accuracy any market can achieve, and four forces can hold performance below it: trading fees make small corrections not worth making, low liquidity makes prices overreact or barely respond, concentrated wealth lets a few voices dominate, and imitation spreads errors instead of canceling them. A manipulator, who spends money to push the price toward a target, can degrade the price but can also improve accuracy by giving informed traders a mispricing worth correcting. The app lets you vary every force and map when the market stays accurate, stalls, or fails outright.")
 )
